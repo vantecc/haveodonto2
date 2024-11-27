@@ -1,5 +1,5 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode'); // Biblioteca para gerar QR Code como imagem
+const qrcode = require('qrcode'); // Biblioteca para gerar o QR Code como imagem
 const express = require('express'); // Biblioteca para criar o servidor web
 
 const client = new Client({
@@ -7,7 +7,8 @@ const client = new Client({
 });
 
 const app = express(); // Inicializa o servidor Express
-const PORT = process.env.PORT || 3000; // Define a porta do servidor
+const PORT = process.env.PORT || 3000;
+const HOST = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`; // Render URL ou localhost
 
 let qrCodeImageURL = ''; // Variável para armazenar o QR Code como imagem
 
@@ -33,9 +34,10 @@ app.get('/', (req, res) => {
 
 // Inicializa o servidor Express
 app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
+    console.log(`Servidor rodando em ${HOST}`);
 });
 
+// Evento quando o bot estiver pronto
 client.on('ready', async () => {
     console.log('Bot conectado com sucesso!');
 
@@ -43,11 +45,11 @@ client.on('ready', async () => {
     for (let chat of chats) {
         if (chat.unreadCount > 0) {
             if (chat.id.server === 'g.us') {
-                console.log(`Ignorando mensagens nao lidas no grupo: ${chat.name}`);
+                console.log(`Ignorando mensagens não lidas no grupo: ${chat.name}`);
                 continue;
             }
 
-            console.log(`Processando mensagens nao lidas de ${chat.name || chat.id.user}`);
+            console.log(`Processando mensagens não lidas de ${chat.name || chat.id.user}`);
 
             const messages = await chat.fetchMessages({ limit: chat.unreadCount });
             for (let message of messages) {
@@ -69,7 +71,7 @@ async function processMessage(message) {
         return;
     }
 
-    const userId = message.from; 
+    const userId = message.from;
     const now = Date.now();
 
     if (!chatStates[userId]) {
@@ -80,7 +82,7 @@ async function processMessage(message) {
     }
 
     const userState = chatStates[userId];
-    const fiveMinutesPassed = now - userState.lastInteraction > 300000; 
+    const fiveMinutesPassed = now - userState.lastInteraction > 300000;
 
     if (!userState.welcomed || fiveMinutesPassed) {
         message.reply(
@@ -89,7 +91,7 @@ async function processMessage(message) {
 2. Serviços Disponíveis
 3. Localização e Contato`
         );
-        userState.welcomed = true; 
+        userState.welcomed = true;
         userState.lastInteraction = now;
         return;
     }
