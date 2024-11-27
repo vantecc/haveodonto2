@@ -1,14 +1,26 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode'); // Biblioteca para gerar o QR Code como imagem
 const express = require('express'); // Biblioteca para criar o servidor web
-
-const client = new Client({
-    authStrategy: new LocalAuth(),
-});
+const fs = require('fs'); // Para manipulação de arquivos
 
 const app = express(); // Inicializa o servidor Express
 const PORT = process.env.PORT || 3000;
-const HOST = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`; // Render URL ou localhost
+const HOST = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`; // URL pública do Render ou localhost
+
+const SESSION_PATH = './session'; // Diretório personalizado para a sessão
+
+// Certifique-se de que o diretório da sessão existe e está limpo
+if (fs.existsSync(SESSION_PATH)) {
+    fs.rmSync(SESSION_PATH, { recursive: true, force: true }); // Remove o diretório se existir
+}
+
+// Inicializa o cliente do WhatsApp com o LocalAuth
+const client = new Client({
+    authStrategy: new LocalAuth({
+        clientId: 'default', // Identificador único para o cliente
+        dataPath: SESSION_PATH, // Caminho para o diretório da sessão
+    }),
+});
 
 let qrCodeImageURL = ''; // Variável para armazenar o QR Code como imagem
 
@@ -28,7 +40,14 @@ app.get('/', (req, res) => {
             <img src="${qrCodeImageURL}" alt="QR Code">
         `);
     } else {
-        res.send('<h1>QR Code ainda não gerado. Tente novamente em alguns segundos.</h1>');
+        res.send(`
+            <h1>QR Code ainda não gerado. Tentando novamente em 5 segundos...</h1>
+            <script>
+                setTimeout(() => {
+                    window.location.reload();
+                }, 5000); // Recarrega a página automaticamente após 5 segundos
+            </script>
+        `);
     }
 });
 
@@ -101,7 +120,7 @@ async function processMessage(message) {
     if (message.body === '1') {
         message.reply('Horários de funcionamento: Segunda a sexta, das 8h às 18h.');
     } else if (message.body === '2') {
-        message.reply('Serviços disponíveis: Limpeza, restauração, clareamento..');
+        message.reply('Serviços disponíveis: Limpeza, restauração, clareamento...');
     } else if (message.body === '3') {
         message.reply('Localização: Av. José dos Santos e Silva, 26. Teresina-PI.');
     } else {
@@ -111,4 +130,5 @@ async function processMessage(message) {
 
 client.on('message', processMessage);
 
+// Inicializa o cliente do WhatsApp
 client.initialize();
