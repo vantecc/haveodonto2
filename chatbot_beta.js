@@ -1,26 +1,30 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
-
+const qrcode = require('qrcode'); // Biblioteca para gerar o QR Code como imagem
+const fs = require('fs'); // Para manipular arquivos
 
 const client = new Client({
     authStrategy: new LocalAuth(),
 });
 
+// Evento para lidar com o QR Code
+client.on('qr', async (qr) => {
+    console.log('QR Code gerado. Salvando como imagem...');
 
-client.on('qr', (qr) => {
-    console.log('QR Code gerado. Escaneie com seu WhatsApp:');
-    qrcode.generate(qr, { small: true });
+    try {
+        // Gera o QR Code e salva como "qrcode.png" na raiz do projeto
+        await qrcode.toFile('./qrcode.png', qr);
+        console.log('QR Code salvo como "qrcode.png". Faça o download para escanear.');
+    } catch (err) {
+        console.error('Erro ao salvar QR Code:', err);
+    }
 });
-
 
 client.on('ready', async () => {
     console.log('Bot conectado com sucesso!');
 
-
     const chats = await client.getChats();
     for (let chat of chats) {
         if (chat.unreadCount > 0) {
-            
             if (chat.id.server === 'g.us') {
                 console.log(`Ignorando mensagens nao lidas no grupo: ${chat.name}`);
                 continue;
@@ -28,7 +32,6 @@ client.on('ready', async () => {
 
             console.log(`Processando mensagens nao lidas de ${chat.name || chat.id.user}`);
 
-            
             const messages = await chat.fetchMessages({ limit: chat.unreadCount });
             for (let message of messages) {
                 if (!message.fromMe) {
@@ -39,9 +42,7 @@ client.on('ready', async () => {
     }
 });
 
-
 const chatStates = {};
-
 
 async function processMessage(message) {
     const chat = await message.getChat();
@@ -51,7 +52,7 @@ async function processMessage(message) {
         return;
     }
 
-    const userId = message.from; 
+    const userId = message.from;
     const now = Date.now();
 
     if (!chatStates[userId]) {
@@ -62,8 +63,7 @@ async function processMessage(message) {
     }
 
     const userState = chatStates[userId];
-    const fiveMinutesPassed = now - userState.lastInteraction > 300000; 
-
+    const fiveMinutesPassed = now - userState.lastInteraction > 300000;
 
     if (!userState.welcomed || fiveMinutesPassed) {
         message.reply(
@@ -72,14 +72,12 @@ async function processMessage(message) {
 2. Serviços Disponíveis
 3. Localização e Contato`
         );
-        userState.welcomed = true; 
+        userState.welcomed = true;
         userState.lastInteraction = now;
         return;
     }
 
-
     userState.lastInteraction = now;
-
 
     if (message.body === '1') {
         message.reply('Horários de funcionamento: Segunda a sexta, das 8h às 18h.');
@@ -88,16 +86,10 @@ async function processMessage(message) {
     } else if (message.body === '3') {
         message.reply('Localização: Av. José dos Santos e Silva, 26. Teresina-PI.');
     } else {
-
         console.log(`Mensagem irrelevante de ${message.from}: ${message.body}`);
     }
 }
 
-
 client.on('message', processMessage);
 
 client.initialize();
-
-
-
-
