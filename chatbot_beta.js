@@ -4,6 +4,19 @@ const fs = require('fs'); // Para manipular arquivos
 
 const client = new Client({
     authStrategy: new LocalAuth(),
+    puppeteer: {
+        headless: true, // Garante que o Puppeteer rode em modo headless
+        args: [
+            '--no-sandbox', // Remove restrições de segurança no ambiente Render
+            '--disable-setuid-sandbox', // Permite permissões de acesso necessárias
+            '--disable-dev-shm-usage', // Evita problemas de memória compartilhada
+            '--disable-accelerated-2d-canvas', // Desativa renderizações gráficas desnecessárias
+            '--no-first-run', // Impede configurações iniciais desnecessárias
+            '--no-zygote', // Reduz o consumo de memória
+            '--single-process', // Ajuda em servidores com limitações de processos
+            '--disable-gpu' // Remove a dependência de GPU (não usada em headless)
+        ]
+    }
 });
 
 // Evento para lidar com o QR Code
