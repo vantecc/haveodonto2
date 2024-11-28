@@ -1,38 +1,38 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode'); // Biblioteca para gerar o QR Code como imagem
-const express = require('express'); // Biblioteca para criar o servidor web
-const fs = require('fs'); // Para manipulação de arquivos
+const qrcode = require('qrcode'); 
+const express = require('express'); 
+const fs = require('fs');
 
-const app = express(); // Inicializa o servidor Express
+const app = express(); 
 const PORT = process.env.PORT || 3000;
-const HOST = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`; // URL pública do Render ou localhost
+const HOST = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`; 
 
-const SESSION_PATH = './session'; // Diretório personalizado para a sessão
+const SESSION_PATH = './session'; 
 
-// Certifique-se de que o diretório da sessão existe e está limpo
+
 if (fs.existsSync(SESSION_PATH)) {
-    fs.rmSync(SESSION_PATH, { recursive: true, force: true }); // Remove o diretório se existir
+    fs.rmSync(SESSION_PATH, { recursive: true, force: true }); 
 }
 
-// Inicializa o cliente do WhatsApp com o LocalAuth
+
 const client = new Client({
     authStrategy: new LocalAuth({
-        clientId: 'default', // Identificador único para o cliente
-        dataPath: SESSION_PATH, // Caminho para o diretório da sessão
+        clientId: 'default', 
+        dataPath: SESSION_PATH, 
     }),
 });
 
-let qrCodeImageURL = ''; // Variável para armazenar o QR Code como imagem
+let qrCodeImageURL = ''; 
 
-// Evento para lidar com o QR Code
+
 client.on('qr', async (qr) => {
     console.log('QR Code gerado. Acesse o navegador para escanear.');
 
-    // Gera o QR Code como uma URL de imagem
+    
     qrCodeImageURL = await qrcode.toDataURL(qr);
 });
 
-// Rota para exibir o QR Code no navegador
+
 app.get('/', (req, res) => {
     if (qrCodeImageURL) {
         res.send(`
@@ -51,12 +51,12 @@ app.get('/', (req, res) => {
     }
 });
 
-// Inicializa o servidor Express
+
 app.listen(PORT, () => {
     console.log(`Servidor rodando em ${HOST}`);
 });
 
-// Evento quando o bot estiver pronto
+
 client.on('ready', async () => {
     console.log('Bot conectado com sucesso!');
 
@@ -130,5 +130,5 @@ async function processMessage(message) {
 
 client.on('message', processMessage);
 
-// Inicializa o cliente do WhatsApp
+
 client.initialize();
